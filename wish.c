@@ -3,9 +3,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+int debug = 0;
+
+int execute_command(char *command, char *line, int index)
+{
+
+}
+
 int run_wish(FILE *input, int is_interactive)
 {
-    
+    char *line = NULL;
+    size_t len = 0;
+    int left = 0;
+    int right = 0;
+
+    while(getline(&line, &len, input) != -1)
+    {
+        
+    }
 }
 
 void print_error()
@@ -44,7 +59,8 @@ int main(int argc, char *argv[])
                 run_wish(input, is_interactive);
                 fclose(input);
             }
-
+            break;
     }
+
     return 0;
 }
