@@ -2,14 +2,103 @@
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int debug = 0;
 
 typedef struct LinkedList
 {
-    char *command;
+    char *path;
     struct LinkedList *next;
 } ListNode;
+
+int process_args(char **args, ListNode *paths)
+{
+    int len = sizeof(args);
+    int i = 0;
+    char *arg = args[0];
+
+    switch(arg)
+    {
+        case "cd":
+            break;
+        case "path":
+            break;
+        case "exit":
+            free_array(args);
+            deallocate_List(paths);
+            return 0;
+        default:
+            temp = paths;
+            while (paths != NULL && access(paths->path, X_OK) == -1)
+            {
+                paths = paths->next;
+            }
+
+            if (paths == NULL)
+            {
+                print_error();
+                paths = temp;
+                return 1;
+            }
+
+            while (paths != NULL && execv(paths->path, args) == -1)
+            {
+                paths = paths->next;
+                while (paths != NULL && access(paths->path, X_OK) == -1)
+                {
+                    paths = paths->next;
+                }
+            }
+            if (paths == NULL)
+            {
+                print_error();
+                paths = temp;
+                return 1;
+            }
+    }
+    return 0;
+}
+
+void free_array(char **str_arr, int len)
+{
+    int i = 0;
+
+    for (i = 0; i < len; i++)
+    {
+        free(str_arr[i]);
+    }
+    free(str_arr);
+}
+
+char **get_args(char *arguments)
+{
+    char **args = NULL;
+    char *arg = NULL;
+    int size = 0;
+
+    while ((arg = strsep(&line, " ")) != NULL)
+    {
+        size++;
+        args = realloc(args, size);
+        if (args == NULL)
+        {
+            print_error();
+            free_array(args, size - 1);
+            return NULL;
+        }
+        
+        args[size-1] = (char *)calloc(strlen(arg) + 1, sizeof(char));
+        if (args[size-1] == NULL)
+        {
+            print_error();
+            free_array(args, size)
+            return NULL;
+        }
+        strcpy(args[size-1], arg);
+    }
+    return args;
+}
 
 void deallocate_List(ListNode *head) 
 {
@@ -26,7 +115,7 @@ void deallocate_List(ListNode *head)
     return;
 }
 
-int add_command_to_list(ListNode *head, char* new_command, size_t len)
+int add_path_to_list(ListNode *head, char* new_path, size_t len)
 {
     ListNode *new_list = NULL;
     ListNode *temp = NULL;
@@ -41,15 +130,15 @@ int add_command_to_list(ListNode *head, char* new_command, size_t len)
             return 1;
         }
 
-        new_list->command = (char *)calloc(len, sizeof(char));
-        if (new_list->command == NULL)
+        new_list->path = (char *)calloc(len, sizeof(char));
+        if (new_list->path == NULL)
         {
             print_error():
             free(new_list);
             return 1;
         }
 
-        strcpy(new_list->command, new_command);
+        strcpy(new_list->path, new_path);
         head = new_list;
     } 
     else
@@ -68,33 +157,31 @@ int add_command_to_list(ListNode *head, char* new_command, size_t len)
             return 1;
         }
 
-        head->next->command = (char *)calloc(len, sizeof(char));
-        if (head->next->command == NULL)
+        head->next->path = (char *)calloc(len, sizeof(char));
+        if (head->next->path == NULL)
         {
             print_error():
             deallocate_List(temp);
             return 1;
         }
 
-        strcpy(head->next->command, new_command);
+        strcpy(head->next->path, new_path);
         head = temp;
     }
     return 0;
 }
 
-// int execute_command(char *command, char *line, int index)
-// {
-
-// }
-
 int run_wish(FILE *input, int is_interactive)
 {
     char *line = NULL;
     size_t len = 0;
-    int left = 0;
-    int right = 0;
     int has_input = 0;
     char *arg = NULL;
+    ListNode *paths = NULL;
+    ListNode *temp = NULL;
+    char **args = NULL;
+
+    add_path_to_list(paths, "/bin", strlen("/bin") + 1);
 
     while(1)
     {
@@ -108,20 +195,16 @@ int run_wish(FILE *input, int is_interactive)
         {
             break;
         }
-        
-        while ((arg = strsep(&line, " ")) != NULL)
-        {
-            switch(arg)
-            {
-                case "cd":
-                    break;
-                case "path":
-                    break;
-                case "exit":
-                    exit(0);
-                default:
 
-            }
+        args = get_args(line);
+        if (args == NULL)
+        {
+            return 1;
+        }
+
+        if (process_args(args, paths))
+        {
+            
         }
     }
     return 0;
