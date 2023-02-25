@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 int debug = 0;
 
@@ -27,7 +28,7 @@ int process_args(char **args, ListNode *paths)
         case "exit":
             free_array(args);
             deallocate_List(paths);
-            return 0;
+            exit(0);
         default:
             temp = paths;
             while (paths != NULL && access(paths->path, X_OK) == -1)
@@ -39,7 +40,7 @@ int process_args(char **args, ListNode *paths)
             {
                 print_error();
                 paths = temp;
-                return 1;
+                exit(1);
             }
 
             while (paths != NULL && execv(paths->path, args) == -1)
@@ -54,10 +55,12 @@ int process_args(char **args, ListNode *paths)
             {
                 print_error();
                 paths = temp;
-                return 1;
+                exit(1);
             }
+
+            paths = temp;
     }
-    return 0;
+    return 2;
 }
 
 void free_array(char **str_arr, int len)
@@ -180,8 +183,13 @@ int run_wish(FILE *input, int is_interactive)
     ListNode *paths = NULL;
     ListNode *temp = NULL;
     char **args = NULL;
+    int ret = 0;
 
-    add_path_to_list(paths, "/bin", strlen("/bin") + 1);
+    ret = add_path_to_list(paths, "/bin", strlen("/bin") + 1);
+    if (ret == 1)
+    {
+        exit(1);
+    }
 
     while(1)
     {
@@ -202,9 +210,9 @@ int run_wish(FILE *input, int is_interactive)
             return 1;
         }
 
-        if (process_args(args, paths))
+        if (process_args(args, paths) == 0)
         {
-            
+            exit(0);
         }
     }
     return 0;
@@ -231,7 +239,8 @@ int main(int argc, char *argv[])
         case 1:
             input = stdin;
             is_interactive = 1;
-            run_wish(input, is_interactive);
+            if (run_wish(input, is_interactive) == 1)
+                exit(1);
             break;
         default:
             for (i = 1; i < argc; i++)
@@ -243,7 +252,10 @@ int main(int argc, char *argv[])
                     exit(1);
                 }
 
-                run_wish(input, is_interactive);
+                if(run_wish(input, is_interactive) == 1)
+                {
+                    exit(1);
+                }
                 fclose(input);
             }
             break;
