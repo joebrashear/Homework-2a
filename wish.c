@@ -5,8 +5,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 int debug = 1;
+int size = 0;
+char **args = NULL;
 
 typedef struct LinkedList
 {
@@ -14,14 +17,17 @@ typedef struct LinkedList
     struct LinkedList *next;
 } ListNode;
 
-void deallocate_List(ListNode *head) 
+ListNode *paths = NULL;
+
+
+void deallocate_List() 
 {
     ListNode *temp = NULL;
 
-    while (head != NULL)
+    while (paths != NULL)
     {
-        temp = head;
-        head = head->next;
+        temp = paths;
+        paths = paths->next;
         free(temp->path);
         free(temp);
     }
@@ -29,16 +35,15 @@ void deallocate_List(ListNode *head)
     return;
 }
 
-void free_array(char **str_arr)
+void free_array()
 {
     int i = 0;
-    int len = sizeof(str_arr);
 
-    for (i = 0; i < len; i++)
+    for (i = 0; i < size; i++)
     {
-        free(str_arr[i]);
+        free(args[i]);
     }
-    free(str_arr);
+    free(args);
 }
 
 void print_error()
@@ -47,60 +52,87 @@ void print_error()
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
-ListNode *add_path_to_list(ListNode *head, char* new_path, size_t len)
+int add_path_to_list(char* new_path, size_t len)
 {
     ListNode *temp = NULL;
     
-    temp = head;
-    while (head->next != NULL)
+    temp = paths;
+    while (paths->next != NULL)
     {
-        head = head->next;
+        paths = paths->next;
     }
 
-    head->next = (ListNode *)calloc(1, sizeof(ListNode));
-    if (head->next == NULL)
-    {
-        print_error();
-        deallocate_List(temp);
-        return NULL;
-    }
-
-    head->next->path = (char *)calloc(len, sizeof(char));
-    if (head->next->path == NULL)
+    paths->next = (ListNode *)calloc(1, sizeof(ListNode));
+    if (paths->next == NULL)
     {
         print_error();
         deallocate_List(temp);
-        return NULL;
+        return 1;
     }
 
-    strcpy(head->next->path, new_path);
+    paths->next->path = (char *)calloc(len, sizeof(char));
+    if (paths->next->path == NULL)
+    {
+        print_error();
+        deallocate_List(temp);
+        return 1;
+    }
 
-    return temp;
+    strcpy(paths->next->path, new_path);
+
+    paths = temp;
+
+    return 0;
 }
 
-char **get_args(char *arguments)
+int get_args(char *arguments)
 {
-    char **args = NULL;
+    args = NULL;
     char *arg = NULL;
-    int size = 0;
+    size = 0;
 
-    while ((arg = strsep(&arguments, " ")) != NULL)
+    while ((arg = strsep(&arguments, "\t> ")) != NULL)
     {
+        if (debug)
+        {
+            if (arg == NULL)
+            {
+                printf("NULL\n");
+            }
+            else
+            {
+                printf("%s,", arg);
+                if (debug)
+                    printf("%s,", arg);
+            }
+        }
+        
+        if (strcmp(arg, "") == 0)
+            continue;
         size++;
+        printf("%d", size);
         args = realloc(args, size);
+        if (debug)
+            printf("here");
         if (args == NULL)
         {
             print_error();
-            free_array(args);
-            return NULL;
+            free_array();
+            return 1;
         }
         
+        // cut off new line character, if any
+        if (arg[strlen(arg)-1] == '\n')
+        {
+            arg[strlen(arg)-1] = '\0';
+            arg = realloc(arg, strlen(arg));
+        }
         args[size-1] = (char *)calloc(strlen(arg) + 1, sizeof(char));
         if (args[size-1] == NULL)
         {
             print_error();
-            free_array(args);
-            return NULL;
+            free_array();
+            return 1;
         }
         strcpy(args[size-1], arg);
     }
@@ -109,8 +141,8 @@ char **get_args(char *arguments)
     if (args == NULL)
     {
         print_error();
-        free_array(args);
-        return NULL;
+        free_array();
+        return 1;
     }
 
     if (debug)
@@ -122,41 +154,80 @@ char **get_args(char *arguments)
             {
                 printf("NULL\n");
             }
-            else{
+            else
+            {
                 printf("%s,", args[i]);
             }
         }
         printf("%d\n", size);
     }
     
-    return args;
+    return 0;
 }
 
-int process_args(char **args, ListNode *paths)
+int process_args()
 {
-    int len = sizeof(args);
-    int i = 0;
-    char *arg = NULL;
+    int left = 0;
+    int right = 0;
     ListNode *temp = NULL;
 
-    while (i < len)
+    while (left < size - 1 && right < size - 1)
     {
-        arg = args[i];
-        if (strcmp("cd", arg) == 0)
+        right = left;
+        if (debug)
+            printf("right index %d\n", right);
+        while (right < size - 1 && args[right] != NULL && strcmp(args[right], "&") != 0)
         {
-            continue;
+            right++;
         }
-        else if (strcmp("path", arg) == 0)
+        if (debug)
+            printf("right index %d\n", right);
+        if (strcmp("cd", args[left]) == 0)
         {
-            continue;
+            if (right - left < 2 || right - left - 1 > 2)
+            {
+                print_error();
+                exit(1);
+            }
+
+            if (chdir(args[right-1]) == -1)
+            {
+                if (debug)
+                    printf("here");
+                print_error();
+                exit(1);
+            }
         }
-        else if(strcmp("exit", arg) == 0)
+        else if (strcmp("path", args[left]) == 0)
         {
-            free_array(args);
             deallocate_List(paths);
-            exit(0);
+            paths = (ListNode *)calloc(1, sizeof(ListNode));
+            
+            ListNode *temp = paths;
+            
+            for (int j = left + 1; j < right; j++)
+            {
+                add_path_to_list(args[j], sizeof(args[j]));
+                if (paths == NULL)
+                {
+                    exit(1);
+                }
+            }
+            // free dummy head
+            paths = temp;
+            ListNode *temp2 = paths;
+            paths = paths->next;
+            free(temp2);
         }
-        else
+        else if(strcmp("exit", args[left]) == 0)
+        {
+            if (right - left != 1)
+            {
+                exit(1);
+            }
+            return 0;
+        }
+        else if (fork() == 0)
         {
             temp = paths;
 
@@ -171,8 +242,14 @@ int process_args(char **args, ListNode *paths)
                 paths = temp;
                 exit(1);
             }
+            
+            // Create path for executable
+            char command[] = "";
+            strcpy(command, paths->path);
+            strcat(command, "/");
+            strcat(command, args[left]); 
 
-            while (paths != NULL && execv(paths->path, args) == -1)
+            while (paths != NULL && execv(command, args) == -1)
             {
                 paths = paths->next;
                 while (paths != NULL && access(paths->path, X_OK) == -1)
@@ -180,17 +257,19 @@ int process_args(char **args, ListNode *paths)
                     paths = paths->next;
                 }
             }
+            
             if (paths == NULL)
             {
                 print_error();
                 paths = temp;
                 exit(1);
             }
-
             paths = temp;
             return 2;
         }
+        left = right;
     }
+    wait(NULL);
     return 2;
 }
 
@@ -199,17 +278,19 @@ int run_wish(FILE *input, int is_interactive)
     char *line = NULL;
     size_t len = 0;
     int has_input = 0;
-    ListNode *paths = (ListNode *)calloc(1, sizeof(ListNode));
-    char **args = NULL;
+    paths = (ListNode *)calloc(1, sizeof(ListNode));
+    args = NULL;
 
-    paths = add_path_to_list(paths, "/bin", strlen("/bin") + 1);
+    add_path_to_list("/bin", strlen("/bin") + 1);
     if (paths == NULL)
     {
         exit(1);
     }
 
     // ignore dummy head
+    ListNode *temp = paths;
     paths = paths->next;
+    free(temp);
 
     while(1)
     {
@@ -224,17 +305,20 @@ int run_wish(FILE *input, int is_interactive)
             break;
         }
 
-        args = get_args(line);
+        get_args(line);
         if (args == NULL)
         {
             return 1;
         }
-
-        if (process_args(args, paths) == 0)
+        
+        if (process_args() == 0)
         {
+            free_array();
             exit(0);
         }
+        free_array();
     }
+    free(line);
     return 0;
 }
 
