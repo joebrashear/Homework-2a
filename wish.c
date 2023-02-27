@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-int debug = 0;
+int debug = 1;
 int size = 0;
 char **args = NULL;
 
@@ -36,15 +36,15 @@ void deallocate_List()
     return;
 }
 
-void free_array()
+void free_string_array(char **array, int len)
 {
     int i = 0;
 
-    for (i = 0; i < size - 1; i++)
+    for (i = 0; i < len; i++)
     {
-        free(args[i]);
+        free(array[i]);
     }
-    free(args);
+    free(array);
 }
 
 void print_error()
@@ -86,6 +86,36 @@ int add_path_to_list(char* new_path, size_t len)
     return 0;
 }
 
+int copy_to_args(char *arg)
+{
+    size++;
+    if (args == NULL)
+    {
+        
+        args = (char **)calloc(size, sizeof(char *));
+    }
+    args = (char **)realloc(args, size * sizeof(char *));
+    if (args == NULL)
+    {
+        print_error();
+        return 1;
+    }
+    args[size-1] = (char *)calloc(sizeof(arg), sizeof(char));
+    if (args[size-1] == NULL)
+    {
+        print_error();
+        free_string_array(args, size);
+        return 1;
+    }
+    strcpy(args[size-1], arg);
+    // cut off new line character, if any
+    if (args[size-1][strlen(arg)-1] == '\n')
+    {
+        args[size-1][strlen(arg)-1] = '\0';
+    }
+    return 0;
+}
+
 int get_args(char *arguments)
 {
     args = NULL;
@@ -96,60 +126,22 @@ int get_args(char *arguments)
     {        
         if (*arg == '\0')
             continue;
-        size++;
-        if (args == NULL)
-        {
-            args = (char **)calloc(size, sizeof(char *));
-        }
-        else
-        {
-            args = (char **)realloc(args, size * sizeof(char *));
-        }
-        
-        if (args == NULL)
-        {
-            print_error();
-            free_array();
-            return 1;
-        }
-        args[size-1] = (char *)calloc(sizeof(arg), sizeof(char));
-        if (args[size-1] == NULL)
-        {
-            print_error();
-            free_array();
-            return 1;
-        }
-        strcpy(args[size-1], arg);
-        // cut off new line character, if any
-        if (args[size-1][strlen(arg)-1] == '\n')
-        {
-            args[size-1][strlen(arg)-1] = '\0';
-        }
-    }
-    size++;
-    args = realloc(args, size);
-    if (args == NULL)
-    {
-        print_error();
-        free_array();
-        return 1;
+        copy_to_args(arg);
     }
 
     if (debug)
     {
-        for (int i = 0; i < size - 1; i++)
+        for (int i = 0; i < size; i++)
         {
-            
             if (args[i] == NULL)
             {
-                printf("NULL\n");
+                printf("NULL");
             }
-            else
-            {
+            else{
                 printf("%s,", args[i]);
             }
         }
-        printf("%d\n", size);
+        printf("\n");
     }
     
     return 0;
@@ -158,9 +150,9 @@ int get_args(char *arguments)
 int process_args(int left)
 {
     ListNode *temp = NULL;
-    int right = size - 1;
+    int right = size;
 
-    if (left == size - 1)
+    if (left == size)
     {
         return 2;
     }
@@ -212,14 +204,10 @@ int process_args(int left)
         }
         return 0;
     }
-    else if (strcmp("&", args[left]))
-    {
-        ;
-    }
     else if (fork() == 0)
     {
+        right = left;
         temp = paths;
-
         while (paths != NULL && access(paths->path, X_OK) == -1)
         {
             paths = paths->next;
@@ -232,24 +220,79 @@ int process_args(int left)
             return 1;
         }
 
-        if (strcmp(">", args[left]))
+        // looking for output input (ls > output)
+        while (right < size && strcmp(">", args[right]) != 0)
         {
-            if (right - left > 2 || right - left < 2)
+            right++;
+        }
+
+        if (right != size)
+        {
+            if (size - right != 2)
             {
                 print_error();
                 return 1;
             }
-            
+
+            int redir = open(args[right+1], O_WRONLY | O_CREAT);
+            if (redir == -1)
+            {
+                print_error();
+                return 1;
+            }
+
+            if (dup2(redir, STDOUT_FILENO) == -1)
+            {
+                print_error();
+                return 1;
+            }
+
+            if (dup2(redir, STDERR_FILENO) == -1)
+            {
+                print_error();
+                return 1;
+            }
+            close(redir);
         }
-        
         // Create path for executable
         char command[] = "";
         strcpy(command, paths->path);
         strcat(command, "/");
-
         strcat(command, args[left]); 
+        
+        // create copy of args 
+        char **sub_args = NULL;
+        right = left;
 
-        while (paths != NULL && execv(command, args) == -1)
+        while (right < size && strcmp(args[right], "&") != 0)
+        {
+            sub_args = (char **)realloc(sub_args, ((right - left) * sizeof(char *)) + 1);
+            if (sub_args == NULL)
+            {
+                print_error();
+                return 1;
+            }
+            sub_args[right] = (char *)calloc(sizeof(args[right]), sizeof(char));
+            if (sub_args[right] == NULL)
+            {
+                // TODO: add way to free sub args array
+                free_string_array(sub_args, right);
+                print_error();
+                return 1;
+            }
+            strcpy(sub_args[right], args[right]);
+            right++;
+        }
+
+        if (right < size && strcmp(args[right], "&") == 0)
+        {
+            if (fork() == 0)
+            {
+                return process_args(right + 1);
+            }
+        }
+
+        while (paths != NULL && execv(command, sub_args) == -1)
         {
             paths = paths->next;
             while (paths != NULL && access(paths->path, X_OK) == -1)
@@ -264,12 +307,39 @@ int process_args(int left)
             paths = temp;
             return 1;
         }
+
+        free(command);
         paths = temp;
         return 2;
     }
 
     wait(NULL);
     return 2;
+}
+
+char *string_replace(char *orig, char *rep, char *with)
+{
+    char *result = NULL;
+    char *temp = NULL;
+    char *insert_pt = NULL;
+    int len_rep = strlen(rep);
+    int len_with = strlen(with);
+    int len_orig = strlen(orig);
+    int len_front = 0;
+
+    temp = result = (char *)calloc(len_orig + (len_with - len_rep) + 1, sizeof(char));
+    insert_pt = strstr(orig, rep);
+    len_front = insert_pt - orig;
+    // iterate to right where we need to replace
+    temp = strncpy(temp, orig, len_front) + len_front;
+    //replace
+    temp = strcpy(temp, with) + len_with;
+    // move orig up past the front and the replacement
+    orig += len_front + len_rep;
+    // copy the rest to temp
+    strcpy(temp, orig);
+
+    return result;
 }
 
 int run_wish(FILE *input, int is_interactive)
@@ -303,19 +373,31 @@ int run_wish(FILE *input, int is_interactive)
         {
             break;
         }
+        
+        if (strstr(line, ">") != NULL)
+        {
+            line = string_replace(line, ">", " > ");
+        }
+
+        if (strstr(line, "&") != NULL)
+        {
+            line = string_replace(line, "&", " & ");
+        }
 
         get_args(line);
         if (args == NULL)
         {
             return 1;
         }
+
+        fflush(stdout);
         
         if (process_args(0) == 0)
         {
-            free_array();
+            free_string_array(args, size);
             exit(0);
         }
-        free_array();
+        free_string_array(args, size);
     }
     free(line);
     return 0;

@@ -1,0 +1,10 @@
+Makefile
+hello
+output
+output.txt
+test-wish.sh
+tester
+tests
+wish
+wish.c
+yee
