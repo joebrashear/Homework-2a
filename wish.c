@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <errno.h>
 
 int debug = 1;
 int size = 0;
@@ -150,7 +151,12 @@ int get_args(char *arguments)
 int process_args(int left)
 {
     ListNode *temp = NULL;
+    ListNode *temp2 = NULL;
+    char *command = NULL;
     int right = size;
+    char **sub_args = NULL;
+    pid_t wpid;
+    int status = 0;
 
     if (left == size)
     {
@@ -177,8 +183,7 @@ int process_args(int left)
     {
         deallocate_List(paths);
         paths = (ListNode *)calloc(1, sizeof(ListNode));
-        
-        ListNode *temp = paths;
+        temp = paths;
         
         for (int j = left + 1; j < right; j++)
         {
@@ -191,7 +196,7 @@ int process_args(int left)
         }
         // free dummy head
         paths = temp;
-        ListNode *temp2 = paths;
+        temp2 = paths;
         paths = paths->next;
         free(temp2);
     }
@@ -204,7 +209,7 @@ int process_args(int left)
         }
         return 0;
     }
-    else if (fork() == 0)
+    else
     {
         right = left;
         temp = paths;
@@ -220,51 +225,17 @@ int process_args(int left)
             return 1;
         }
 
-        // looking for output input (ls > output)
-        while (right < size && strcmp(">", args[right]) != 0)
-        {
-            right++;
-        }
-
-        if (right != size)
-        {
-            if (size - right != 2)
-            {
-                print_error();
-                return 1;
-            }
-
-            int redir = open(args[right+1], O_WRONLY | O_CREAT);
-            if (redir == -1)
-            {
-                print_error();
-                return 1;
-            }
-
-            if (dup2(redir, STDOUT_FILENO) == -1)
-            {
-                print_error();
-                return 1;
-            }
-
-            if (dup2(redir, STDERR_FILENO) == -1)
-            {
-                print_error();
-                return 1;
-            }
-            close(redir);
-        }
         // Create path for executable
-        char command[] = "";
+        command = (char *)calloc(sizeof(paths->path) 
+                        + sizeof("/") + sizeof(args[left]), sizeof(char));
         strcpy(command, paths->path);
         strcat(command, "/");
         strcat(command, args[left]); 
         
         // create copy of args 
-        char **sub_args = NULL;
-        right = left;
+        sub_args = NULL;
 
-        while (right < size && strcmp(args[right], "&") != 0)
+        while (right < size && strcmp(args[right], "&") != 0 && strcmp(args[right], ">") != 0)
         {
             sub_args = (char **)realloc(sub_args, ((right - left) * sizeof(char *)) + 1);
             if (sub_args == NULL)
@@ -286,34 +257,46 @@ int process_args(int left)
 
         if (right < size && strcmp(args[right], "&") == 0)
         {
-            if (fork() == 0)
-            {
-                return process_args(right + 1);
-            }
+            process_args(right + 1);
         }
 
-        while (paths != NULL && execv(command, sub_args) == -1)
-        {
-            paths = paths->next;
-            while (paths != NULL && access(paths->path, X_OK) == -1)
+        int sub_args_size = right;
+
+        int child = fork();
+        if (child == 0)
+        {   
+            while (paths != NULL && execv(command, sub_args) == -1)
             {
                 paths = paths->next;
+                while (paths != NULL && access(paths->path, X_OK) == -1)
+                {
+                    paths = paths->next;
+                }
             }
-        }
-        
-        if (paths == NULL)
-        {
-            print_error();
-            paths = temp;
-            return 1;
-        }
+            
+            if (paths == NULL)
+            {
+                print_error();
+                free(command);
+                free_string_array(sub_args, sub_args_size);
+                paths = temp;
+                return 1;
+            }
 
-        free(command);
-        paths = temp;
-        return 2;
+            free(command);
+            free_string_array(sub_args, sub_args_size);
+            paths = temp;
+            return 2;
+        }
+        else if (child == -1)
+        {
+            print_error(1);
+            free(command);
+            free_string_array(sub_args, sub_args_size);
+        }
     }
 
-    wait(NULL);
+    while ((wpid = wait(&status)) > 0);
     return 2;
 }
 
@@ -322,20 +305,58 @@ char *string_replace(char *orig, char *rep, char *with)
     char *result = NULL;
     char *temp = NULL;
     char *insert_pt = NULL;
-    int len_rep = strlen(rep);
-    int len_with = strlen(with);
-    int len_orig = strlen(orig);
+    int len_rep = 0;
+    int len_with = 0;
+    int len_orig = 0;
     int len_front = 0;
+    int count = 0;
+    int i = 0;
+    
+    if (orig == NULL || rep == NULL)
+    {
+        print_error();
+        return NULL;
+    }
 
-    temp = result = (char *)calloc(len_orig + (len_with - len_rep) + 1, sizeof(char));
-    insert_pt = strstr(orig, rep);
-    len_front = insert_pt - orig;
-    // iterate to right where we need to replace
-    temp = strncpy(temp, orig, len_front) + len_front;
-    //replace
-    temp = strcpy(temp, with) + len_with;
-    // move orig up past the front and the replacement
-    orig += len_front + len_rep;
+    len_rep = strlen(rep);
+    if (len_rep == 0)
+    {
+        print_error();
+        return NULL;
+    }
+
+    if (with == NULL)
+    {
+        with = "";
+    }
+    len_with = strlen(with);
+    len_orig = strlen(orig);
+
+    insert_pt = orig;
+    for (count = 0; (temp = strstr(insert_pt, rep)); ++count)
+    {
+        insert_pt = temp + len_rep;
+    }
+
+    temp = result = (char *)calloc(len_orig + (len_with - len_rep) * count + 1, sizeof(char));
+
+    if (result == NULL)
+    {
+        print_error();
+        return NULL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        insert_pt = strstr(orig, rep);
+        len_front = insert_pt - orig;
+        // iterate to right where we need to replace
+        temp = strncpy(temp, orig, len_front) + len_front;
+        //replace
+        temp = strcpy(temp, with) + len_with;
+        // move orig up past the front and the replacement
+        orig += len_front + len_rep;
+    }
     // copy the rest to temp
     strcpy(temp, orig);
 
@@ -347,6 +368,13 @@ int run_wish(FILE *input, int is_interactive)
     char *line = NULL;
     size_t len = 0;
     int has_input = 0;
+    ListNode *temp = NULL;
+    char *temp2 = NULL;
+    int redir = STDOUT_FILENO;
+    int stdout_copy;
+    int stderr_copy;
+    int redir_index = 0;
+    FILE *temp_file = NULL;
     paths = (ListNode *)calloc(1, sizeof(ListNode));
     args = NULL;
 
@@ -357,7 +385,7 @@ int run_wish(FILE *input, int is_interactive)
     }
 
     // ignore dummy head
-    ListNode *temp = paths;
+    temp = paths;
     paths = paths->next;
     free(temp);
 
@@ -376,12 +404,16 @@ int run_wish(FILE *input, int is_interactive)
         
         if (strstr(line, ">") != NULL)
         {
+            temp2 = line;
             line = string_replace(line, ">", " > ");
+            free(temp2);
         }
 
         if (strstr(line, "&") != NULL)
         {
+            temp2 = line;
             line = string_replace(line, "&", " & ");
+            free(temp2);
         }
 
         get_args(line);
@@ -390,14 +422,97 @@ int run_wish(FILE *input, int is_interactive)
             return 1;
         }
 
-        fflush(stdout);
+        redir_index = 0;
+        while (redir_index < size && strcmp(args[redir_index], ">") != 0)
+        {
+            redir_index++;
+        }
+
+        if (redir_index < size && strcmp(args[redir_index], ">") == 0)
+        {
+            if (size - redir_index != 2)
+            {
+                if (debug)
+                    printf("line 235\n");
+                print_error();
+                return 1;
+            }
+
+            temp_file = fopen(args[redir_index+1], "w");
+            if (temp_file == NULL)
+            {
+                if (debug)
+                    printf("temp file failed to open\n");
+                print_error();
+                free_string_array(args, size);
+                continue;
+            }
+            fclose(temp_file); // empty the file
+
+            redir = open(args[redir_index+1], O_WRONLY|O_CREAT,S_IRWXU|S_IRWXG|S_IRWXO);
+            if (redir == -1)
+            {
+                if (debug)
+                    printf("redir file failed to open\n");
+                print_error();
+                free_string_array(args, size);
+                continue;
+            }
+            stdout_copy = dup(STDOUT_FILENO);
+            if (dup2(redir, STDOUT_FILENO) == -1)
+            {
+                if (debug)
+                    printf("dup2 failed to redirect stdout\n");
+                print_error();
+                free_string_array(args, size);
+                continue;
+            }
+
+            stderr_copy = dup(STDERR_FILENO);
+            if (dup2(redir, STDERR_FILENO) == -1)
+            {
+                if (debug)
+                    printf("dup2 failed to redirect stderr\n");
+                print_error();
+                free_string_array(args, size);
+                continue;
+            }
+            close(redir);
+        }
         
+
         if (process_args(0) == 0)
         {
             free_string_array(args, size);
             exit(0);
         }
-        free_string_array(args, size);
+        else
+        {
+            if (redir_index < size && strcmp(args[redir_index], ">") == 0)
+            {
+                if (dup2(stdout_copy, STDOUT_FILENO) == -1)
+                {
+                    if (debug)
+                        printf("dup2 failed to redirect stdout back to normal\n");
+                    print_error();
+                    free_string_array(args, size);
+                    continue;
+                }
+
+                if (dup2(stderr_copy, STDERR_FILENO) == -1)
+                {
+                    if (debug)
+                        printf("dup2 failed to redirect stderr back to normal\n");
+                    print_error();
+                    free_string_array(args, size);
+                    continue;
+                }
+                close(stdout_copy);
+                close(stderr_copy);
+            }
+            
+            free_string_array(args, size);
+        }
     }
     free(line);
     return 0;
