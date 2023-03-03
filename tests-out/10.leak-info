@@ -1,0 +1,64 @@
+==10724== Memcheck, a memory error detector
+==10724== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==10724== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==10724== Command: ./wish tests/10.in
+==10724== Parent PID: 10600
+==10724== 
+==10724== Conditional jump or move depends on uninitialised value(s)
+==10724==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10724==    by 0x109593: free_string_array (wish.c:65)
+==10724==    by 0x10A69C: process_args (wish.c:425)
+==10724==    by 0x10A9E2: run_wish (wish.c:526)
+==10724==    by 0x10AB40: main (wish.c:566)
+==10724== 
+==10725== Conditional jump or move depends on uninitialised value(s)
+==10724== Invalid read of size 8
+==10724==    at 0x109589: free_string_array (wish.c:65)
+==10725==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10725==    by 0x109593: free_string_array (wish.c:65)
+==10724==    by 0x10A69C: process_args (wish.c:425)
+==10724==    by 0x10A9E2: run_wish (wish.c:526)
+==10725==    by 0x10A1B1: process_args (wish.c:325)
+==10725==    by 0x10A9E2: run_wish (wish.c:526)
+==10724==    by 0x10AB40: main (wish.c:566)
+==10724==  Address 0x4a508c0 is 0 bytes after a block of size 16 alloc'd
+==10725==    by 0x10AB40: main (wish.c:566)
+==10725== 
+==10724==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10725== Invalid read of size 8
+==10725==    at 0x109589: free_string_array (wish.c:65)
+==10724==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10724==    by 0x109EA5: process_args (wish.c:277)
+==10725==    by 0x10A1B1: process_args (wish.c:325)
+==10725==    by 0x10A9E2: run_wish (wish.c:526)
+==10724==    by 0x10A9E2: run_wish (wish.c:526)
+==10724==    by 0x10AB40: main (wish.c:566)
+==10725==    by 0x10AB40: main (wish.c:566)
+==10725==  Address 0x4a508c0 is 0 bytes after a block of size 16 alloc'd
+==10724== 
+==10725==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10725==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10725==    by 0x109EA5: process_args (wish.c:277)
+==10725==    by 0x10A9E2: run_wish (wish.c:526)
+==10725==    by 0x10AB40: main (wish.c:566)
+==10725== 
+==10725== 
+==10725== HEAP SUMMARY:
+==10725==     in use at exit: 0 bytes in 0 blocks
+==10725==   total heap usage: 24 allocs, 24 frees, 4,958 bytes allocated
+==10725== 
+==10725== All heap blocks were freed -- no leaks are possible
+==10725== 
+==10725== Use --track-origins=yes to see where uninitialised values come from
+==10725== For lists of detected and suppressed errors, rerun with: -s
+==10725== ERROR SUMMARY: 3 errors from 2 contexts (suppressed: 0 from 0)
+==10724== 
+==10724== HEAP SUMMARY:
+==10724==     in use at exit: 0 bytes in 0 blocks
+==10724==   total heap usage: 24 allocs, 24 frees, 4,958 bytes allocated
+==10724== 
+==10724== All heap blocks were freed -- no leaks are possible
+==10724== 
+==10724== Use --track-origins=yes to see where uninitialised values come from
+==10724== For lists of detected and suppressed errors, rerun with: -s
+==10724== ERROR SUMMARY: 3 errors from 2 contexts (suppressed: 0 from 0)

@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-int debug = 1;
+int debug = 0;
 int size = 0;
 char **args = NULL;
 
@@ -37,8 +37,27 @@ void deallocate_List()
     return;
 }
 
+void print_paths() 
+{
+    ListNode *curr  = paths;
+
+    printf("Print paths: ");
+    while (curr != NULL)
+    {
+        printf("%s, ", curr->path);
+        curr = curr->next;
+    }
+    printf("\n");
+
+    return;
+}
+
 void free_string_array(char **array, int len)
 {
+    if (array == NULL)
+    {
+        return;
+    }
     int i = 0;
 
     for (i = 0; i < len; i++)
@@ -101,7 +120,7 @@ int copy_to_args(char *arg)
         print_error();
         return 1;
     }
-    args[size-1] = (char *)calloc(sizeof(arg), sizeof(char));
+    args[size-1] = (char *)calloc(strlen(arg) + 1, sizeof(char));
     if (args[size-1] == NULL)
     {
         print_error();
@@ -123,10 +142,12 @@ int get_args(char *arguments)
     char *arg = NULL;
     size = 0;
 
-    while ((arg = strsep(&arguments, "\t ")) != NULL)
+    while ((arg = strsep(&arguments, "\n\t ")) != NULL)
     {        
-        if (*arg == '\0')
+        if (strcmp(arg, "") == 0)
             continue;
+        if (debug)
+            printf("%s arg\n", arg);
         copy_to_args(arg);
     }
 
@@ -134,15 +155,11 @@ int get_args(char *arguments)
     {
         for (int i = 0; i < size; i++)
         {
-            if (args[i] == NULL)
-            {
-                printf("NULL");
-            }
-            else{
-                printf("%s,", args[i]);
-            }
+        
+            printf("%s,", args[i]);
         }
         printf("\n");
+        printf("%d\n", size);
     }
     
     return 0;
@@ -157,8 +174,11 @@ int process_args(int left)
     char **sub_args = NULL;
     pid_t wpid;
     int status = 0;
+    int sub_args_size = 0;
+    int redir = STDOUT_FILENO;
+    FILE *temp_file = NULL;
 
-    if (left == size)
+    if (left >= size)
     {
         return 2;
     }
@@ -168,13 +188,13 @@ int process_args(int left)
         if (right - left < 2 || right - left - 1 > 2)
         {
             print_error();
-            exit(1);
+            return 1;
         }
 
         if (chdir(args[right-1]) == -1)
         {
             if (debug)
-                printf("here");
+                printf("invalid cd path\n");
             print_error();
             return 1;
         }
@@ -199,6 +219,8 @@ int process_args(int left)
         temp2 = paths;
         paths = paths->next;
         free(temp2);
+        if (debug)
+            print_paths();
     }
     else if(strcmp("exit", args[left]) == 0)
     {
@@ -208,6 +230,15 @@ int process_args(int left)
             return 1;
         }
         return 0;
+    }
+    else if (strcmp("&", args[left]) == 0)
+    {
+        process_args(left + 1);
+    }
+    else if (strcmp(">", args[left]) == 0)
+    {
+        print_error();
+        return 1;
     }
     else
     {
@@ -220,34 +251,45 @@ int process_args(int left)
 
         if (paths == NULL)
         {
+            if (debug)
+            {
+                printf("Invalid path access\n");
+            }
             print_error();
             paths = temp;
             return 1;
         }
 
         // Create path for executable
-        command = (char *)calloc(sizeof(paths->path) 
-                        + sizeof("/") + sizeof(args[left]), sizeof(char));
+        command = (char *)calloc(strlen(paths->path) +
+                        + strlen("/") + strlen(args[left]) + 1, sizeof(char));
         strcpy(command, paths->path);
         strcat(command, "/");
         strcat(command, args[left]); 
         
         // create copy of args 
         sub_args = NULL;
+        sub_args_size = 0;
 
         while (right < size && strcmp(args[right], "&") != 0 && strcmp(args[right], ">") != 0)
         {
-            sub_args = (char **)realloc(sub_args, ((right - left) * sizeof(char *)) + 1);
+            sub_args_size = right - left + 2;
+            sub_args = (char **)realloc(sub_args, ((sub_args_size) * sizeof(char *)));
             if (sub_args == NULL)
             {
+                if (debug)
+                {
+                    printf("Malloc failed sub args\n");
+                }
+                command == NULL ? NULL : free(command);
                 print_error();
                 return 1;
             }
-            sub_args[right] = (char *)calloc(sizeof(args[right]), sizeof(char));
+            sub_args[right] = (char *)calloc(strlen(args[right]) + 1, sizeof(char));
             if (sub_args[right] == NULL)
             {
-                // TODO: add way to free sub args array
-                free_string_array(sub_args, right);
+                command == NULL ? NULL : free(command);
+                sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
                 print_error();
                 return 1;
             }
@@ -255,47 +297,134 @@ int process_args(int left)
             right++;
         }
 
-        if (right < size && strcmp(args[right], "&") == 0)
+        if (debug)
         {
-            process_args(right + 1);
+            printf("Sub args\n");
+            for (int i = 0; i < sub_args_size; i++)
+            {
+                if (sub_args[i] != NULL)
+                {
+                    printf("%s,", sub_args[i]);
+                }
+                else
+                    printf("NULL");
+            }
+            printf("\n");
         }
 
-        int sub_args_size = right;
-
-        int child = fork();
-        if (child == 0)
+        if (fork() == 0)
         {   
-            while (paths != NULL && execv(command, sub_args) == -1)
+            if (right < size && strcmp(args[right], ">") == 0)
             {
+                if (right + 1 >= size || (right + 2 < size && strcmp(args[right+2], "&") != 0))
+                {
+                    print_error();
+                    if (debug)
+                        printf("error: invalid next file\n");
+                    command == NULL ? NULL : free(command);
+                    sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
+                    return 1;
+                }
+
+                temp_file = fopen(args[right+1], "w");
+                if (temp_file != NULL)
+                {
+                    fclose(temp_file); // empty the file
+                }
+
+                redir = open(args[right+1], O_RDWR |O_CREAT,S_IRWXU|S_IRWXG|S_IRWXO, 0777);
+                if (redir == -1)
+                {
+                    if (debug)
+                        printf("redir file failed to open\n");
+                    print_error();
+                    command == NULL ? NULL : free(command);
+                    sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
+                    return 1;
+                }
+
+                if (dup2(redir, STDOUT_FILENO) == -1)
+                {
+                    if (debug)
+                        printf("dup2 failed to redirect stdout\n");
+                    print_error();
+                    close(redir);
+                    command == NULL ? NULL : free(command);
+                    sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
+                    return 1;
+                }
+
+                if (dup2(redir, STDERR_FILENO) == -1)
+                {
+                    if (debug)
+                        printf("dup2 failed to redirect stderr\n");
+                    print_error();
+                    close(redir);
+                    command == NULL ? NULL : free(command);
+                    sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
+                    return 1;
+                }
+                close(redir);
+            }
+            temp = paths;
+            int exec_ret = execv(command, sub_args);
+            
+            while (paths != NULL && exec_ret == -1)
+            {
+                
                 paths = paths->next;
                 while (paths != NULL && access(paths->path, X_OK) == -1)
                 {
                     paths = paths->next;
                 }
+                // Create path for executable
+                if (paths != NULL)
+                {
+                    free(command);
+                    command = (char *)calloc(strlen(paths->path) +
+                        + strlen("/") + strlen(args[left]) + 1, sizeof(char));
+                    strcpy(command, paths->path);
+                    strcat(command, "/");
+                    strcat(command, args[left]); 
+                }
+                exec_ret = execv(command, sub_args);
             }
             
             if (paths == NULL)
             {
+                if (debug)
+                {
+                    printf("No valid path\n");
+                }
                 print_error();
-                free(command);
-                free_string_array(sub_args, sub_args_size);
+                command == NULL ? NULL : free(command);
+                sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
                 paths = temp;
                 return 1;
             }
 
-            free(command);
-            free_string_array(sub_args, sub_args_size);
+            command == NULL ? NULL : free(command);
+            sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
             paths = temp;
             return 2;
         }
-        else if (child == -1)
+        paths = temp;
+        if (right < size && strcmp(args[right], ">") == 0)
         {
-            print_error(1);
-            free(command);
-            free_string_array(sub_args, sub_args_size);
+            while (right < size && strcmp(args[right], "&") != 0)
+            {
+                right++;
+            }
         }
-    }
 
+        if (right < size && strcmp(args[right], "&") == 0)
+        {
+            process_args(right + 1);
+        }
+        command == NULL ? NULL : free(command);
+        sub_args == NULL ? NULL : free_string_array(sub_args, sub_args_size + 2);
+    }
+    
     while ((wpid = wait(&status)) > 0);
     return 2;
 }
@@ -303,63 +432,38 @@ int process_args(int left)
 char *string_replace(char *orig, char *rep, char *with)
 {
     char *result = NULL;
-    char *temp = NULL;
-    char *insert_pt = NULL;
-    int len_rep = 0;
-    int len_with = 0;
-    int len_orig = 0;
-    int len_front = 0;
-    int count = 0;
     int i = 0;
-    
-    if (orig == NULL || rep == NULL)
+    int count = 0;
+    int orig_len = strlen(orig);
+    int rep_len = strlen(rep);
+    int with_len = strlen(with);
+
+    for (int i = 0; i < orig_len; i++)
     {
-        print_error();
-        return NULL;
+        if (strstr(&orig[i], rep) == &orig[i])
+        {
+            count++;
+            i += rep_len - 1;
+        }
     }
 
-    len_rep = strlen(rep);
-    if (len_rep == 0)
+    result = (char *)calloc(orig_len + count * (with_len - rep_len) + 1, sizeof(char));
+
+    while (*orig)
     {
-        print_error();
-        return NULL;
+        if (strstr(orig, rep) == orig)
+        {
+            strcpy(&result[i], with);
+            i += with_len;
+            orig += rep_len;
+        }
+        else
+        {
+            result[i++] = *orig++;
+        }
     }
 
-    if (with == NULL)
-    {
-        with = "";
-    }
-    len_with = strlen(with);
-    len_orig = strlen(orig);
-
-    insert_pt = orig;
-    for (count = 0; (temp = strstr(insert_pt, rep)); ++count)
-    {
-        insert_pt = temp + len_rep;
-    }
-
-    temp = result = (char *)calloc(len_orig + (len_with - len_rep) * count + 1, sizeof(char));
-
-    if (result == NULL)
-    {
-        print_error();
-        return NULL;
-    }
-
-    for (i = 0; i < count; i++)
-    {
-        insert_pt = strstr(orig, rep);
-        len_front = insert_pt - orig;
-        // iterate to right where we need to replace
-        temp = strncpy(temp, orig, len_front) + len_front;
-        //replace
-        temp = strcpy(temp, with) + len_with;
-        // move orig up past the front and the replacement
-        orig += len_front + len_rep;
-    }
-    // copy the rest to temp
-    strcpy(temp, orig);
-
+    result[i] = '\0';
     return result;
 }
 
@@ -370,17 +474,13 @@ int run_wish(FILE *input, int is_interactive)
     int has_input = 0;
     ListNode *temp = NULL;
     char *temp2 = NULL;
-    int redir = STDOUT_FILENO;
-    int stdout_copy;
-    int stderr_copy;
-    int redir_index = 0;
-    FILE *temp_file = NULL;
     paths = (ListNode *)calloc(1, sizeof(ListNode));
     args = NULL;
 
     add_path_to_list("/bin", strlen("/bin") + 1);
     if (paths == NULL)
     {
+        print_error();
         exit(1);
     }
 
@@ -397,6 +497,7 @@ int run_wish(FILE *input, int is_interactive)
         }
 
         has_input = getline(&line, &len, input);
+    
         if (has_input == -1) 
         {
             break;
@@ -419,101 +520,17 @@ int run_wish(FILE *input, int is_interactive)
         get_args(line);
         if (args == NULL)
         {
-            return 1;
+            continue;
         }
-
-        redir_index = 0;
-        while (redir_index < size && strcmp(args[redir_index], ">") != 0)
-        {
-            redir_index++;
-        }
-
-        if (redir_index < size && strcmp(args[redir_index], ">") == 0)
-        {
-            if (size - redir_index != 2)
-            {
-                if (debug)
-                    printf("line 235\n");
-                print_error();
-                return 1;
-            }
-
-            temp_file = fopen(args[redir_index+1], "w");
-            if (temp_file == NULL)
-            {
-                if (debug)
-                    printf("temp file failed to open\n");
-                print_error();
-                free_string_array(args, size);
-                continue;
-            }
-            fclose(temp_file); // empty the file
-
-            redir = open(args[redir_index+1], O_WRONLY|O_CREAT,S_IRWXU|S_IRWXG|S_IRWXO);
-            if (redir == -1)
-            {
-                if (debug)
-                    printf("redir file failed to open\n");
-                print_error();
-                free_string_array(args, size);
-                continue;
-            }
-            stdout_copy = dup(STDOUT_FILENO);
-            if (dup2(redir, STDOUT_FILENO) == -1)
-            {
-                if (debug)
-                    printf("dup2 failed to redirect stdout\n");
-                print_error();
-                free_string_array(args, size);
-                continue;
-            }
-
-            stderr_copy = dup(STDERR_FILENO);
-            if (dup2(redir, STDERR_FILENO) == -1)
-            {
-                if (debug)
-                    printf("dup2 failed to redirect stderr\n");
-                print_error();
-                free_string_array(args, size);
-                continue;
-            }
-            close(redir);
-        }
-        
 
         if (process_args(0) == 0)
         {
             free_string_array(args, size);
-            exit(0);
+            break;
         }
-        else
-        {
-            if (redir_index < size && strcmp(args[redir_index], ">") == 0)
-            {
-                if (dup2(stdout_copy, STDOUT_FILENO) == -1)
-                {
-                    if (debug)
-                        printf("dup2 failed to redirect stdout back to normal\n");
-                    print_error();
-                    free_string_array(args, size);
-                    continue;
-                }
-
-                if (dup2(stderr_copy, STDERR_FILENO) == -1)
-                {
-                    if (debug)
-                        printf("dup2 failed to redirect stderr back to normal\n");
-                    print_error();
-                    free_string_array(args, size);
-                    continue;
-                }
-                close(stdout_copy);
-                close(stderr_copy);
-            }
-            
-            free_string_array(args, size);
-        }
+        free_string_array(args, size);
     }
+    deallocate_List(paths);
     free(line);
     return 0;
 }

@@ -1,0 +1,78 @@
+==10788== Memcheck, a memory error detector
+==10788== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==10788== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==10788== Command: ./wish tests/16.in
+==10788== Parent PID: 10600
+==10788== 
+==10788== Invalid write of size 1
+==10788==    at 0x48DD6F4: getdelim (iogetdelim.c:118)
+==10788==    by 0x10A923: run_wish (wish.c:499)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== Invalid read of size 1
+==10788==    at 0x4842300: index (vg_replace_strmem.c:267)
+==10788==    by 0x10A941: run_wish (wish.c:506)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== Invalid read of size 1
+==10788==    at 0x4842300: index (vg_replace_strmem.c:267)
+==10788==    by 0x10A989: run_wish (wish.c:513)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== Invalid read of size 1
+==10788==    at 0x4847ABB: strcspn (vg_replace_strmem.c:1924)
+==10788==    by 0x48FAA2D: strsep (strsep.c:33)
+==10788==    by 0x10999C: get_args (wish.c:145)
+==10788==    by 0x10A9CC: run_wish (wish.c:520)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== Invalid read of size 1
+==10788==    at 0x48FAA31: strsep (strsep.c:35)
+==10788==    by 0x10999C: get_args (wish.c:145)
+==10788==    by 0x10A9CC: run_wish (wish.c:520)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== Invalid read of size 1
+==10788==    at 0x109950: get_args (wish.c:147)
+==10788==    by 0x10A9CC: run_wish (wish.c:520)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788==  Address 0x4a50455 is 0 bytes after a block of size 5 alloc'd
+==10788==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10788==    by 0x10A7A0: string_replace (wish.c:450)
+==10788==    by 0x10A9B0: run_wish (wish.c:516)
+==10788==    by 0x10AB40: main (wish.c:566)
+==10788== 
+==10788== 
+==10788== HEAP SUMMARY:
+==10788==     in use at exit: 0 bytes in 0 blocks
+==10788==   total heap usage: 13 allocs, 13 frees, 4,769 bytes allocated
+==10788== 
+==10788== All heap blocks were freed -- no leaks are possible
+==10788== 
+==10788== For lists of detected and suppressed errors, rerun with: -s
+==10788== ERROR SUMMARY: 6 errors from 6 contexts (suppressed: 0 from 0)

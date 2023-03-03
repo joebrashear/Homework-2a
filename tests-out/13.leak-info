@@ -1,0 +1,15 @@
+==10752== Memcheck, a memory error detector
+==10752== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==10752== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==10752== Command: ./wish tests/13.in INPUT_DIR/13.in
+==10752== Parent PID: 10600
+==10752== 
+==10752== 
+==10752== HEAP SUMMARY:
+==10752==     in use at exit: 0 bytes in 0 blocks
+==10752==   total heap usage: 7 allocs, 7 frees, 5,197 bytes allocated
+==10752== 
+==10752== All heap blocks were freed -- no leaks are possible
+==10752== 
+==10752== For lists of detected and suppressed errors, rerun with: -s
+==10752== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -1,1 +1,1 @@
-./wish tests/4.in
+valgrind --leak-check=full --show-leak-kinds=all --log-file="tests-out/4.leak-info" ./wish tests/4.in

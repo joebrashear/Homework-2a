@@ -1,0 +1,230 @@
+==10832== Memcheck, a memory error detector
+==10832== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==10832== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==10832== Command: ./wish tests/18.in
+==10832== Parent PID: 10600
+==10832== 
+==10832== Invalid write of size 8
+==10832==    at 0x109F34: process_args (wish.c:288)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10833== Syscall param execve(argv) points to uninitialised byte(s)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50c30 is 0 bytes after a block of size 16 alloc'd
+==10833==    at 0x493D17B: execve (syscall-template.S:78)
+==10833==    by 0x10A3A8: process_args (wish.c:370)
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10833==    by 0x10A9E2: run_wish (wish.c:526)
+==10833==    by 0x10AB40: main (wish.c:566)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10833==  Address 0x4a50b38 is 8 bytes inside a block of size 16 alloc'd
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10833==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10833==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832== 
+==10833==    by 0x109EA5: process_args (wish.c:277)
+==10833==    by 0x10A9E2: run_wish (wish.c:526)
+==10832== Invalid read of size 8
+==10832==    at 0x109F4B: process_args (wish.c:289)
+==10833==    by 0x10AB40: main (wish.c:566)
+==10833== 
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50c30 is 0 bytes after a block of size 16 alloc'd
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== Invalid read of size 8
+==10832==    at 0x109FC0: process_args (wish.c:296)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50c30 is 0 bytes after a block of size 16 alloc'd
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== Invalid write of size 8
+==10832==    at 0x109F34: process_args (wish.c:288)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50d30 is 16 bytes after a block of size 16 alloc'd
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== Invalid read of size 8
+==10832==    at 0x109F4B: process_args (wish.c:289)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50d30 is 16 bytes after a block of size 16 alloc'd
+==10835== Syscall param execve(argv) points to uninitialised byte(s)
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10835==    at 0x493D17B: execve (syscall-template.S:78)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10835==    by 0x10A3A8: process_args (wish.c:370)
+==10835==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10835==    by 0x10A9E2: run_wish (wish.c:526)
+==10835==    by 0x10AB40: main (wish.c:566)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10835==  Address 0x4a50c20 is 0 bytes inside a block of size 16 alloc'd
+==10832== Invalid read of size 8
+==10832==    at 0x109FC0: process_args (wish.c:296)
+==10835==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10835==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10835==    by 0x109EA5: process_args (wish.c:277)
+==10832==  Address 0x4a50d30 is 16 bytes after a block of size 16 alloc'd
+==10835==    by 0x10A66E: process_args (wish.c:422)
+==10835==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10835==    by 0x10AB40: main (wish.c:566)
+==10835== 
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10835== Syscall param execve(argv[0]) points to unaddressable byte(s)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10835==    at 0x493D17B: execve (syscall-template.S:78)
+==10835==    by 0x10A3A8: process_args (wish.c:370)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10835==    by 0x10A66E: process_args (wish.c:422)
+==10835==    by 0x10A9E2: run_wish (wish.c:526)
+==10835==    by 0x10AB40: main (wish.c:566)
+==10835==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==10835== 
+==10832== Conditional jump or move depends on uninitialised value(s)
+==10832==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10832==    by 0x109593: free_string_array (wish.c:65)
+==10832==    by 0x10A69C: process_args (wish.c:425)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10836== Syscall param execve(argv) points to uninitialised byte(s)
+==10832== Invalid read of size 8
+==10832==    at 0x109589: free_string_array (wish.c:65)
+==10836==    at 0x493D17B: execve (syscall-template.S:78)
+==10836==    by 0x10A3A8: process_args (wish.c:370)
+==10832==    by 0x10A69C: process_args (wish.c:425)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10836==    by 0x10A9E2: run_wish (wish.c:526)
+==10836==    by 0x10AB40: main (wish.c:566)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50d20 is 0 bytes after a block of size 16 alloc'd
+==10836==  Address 0x4a50d10 is 0 bytes inside a block of size 16 alloc'd
+==10836==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10836==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10836==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10836==    by 0x10A9E2: run_wish (wish.c:526)
+==10836==    by 0x10AB40: main (wish.c:566)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10836== 
+==10836== Syscall param execve(argv[0]) points to unaddressable byte(s)
+==10836==    at 0x493D17B: execve (syscall-template.S:78)
+==10836==    by 0x10A3A8: process_args (wish.c:370)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A66E: process_args (wish.c:422)
+==10836==    by 0x10A9E2: run_wish (wish.c:526)
+==10836==    by 0x10AB40: main (wish.c:566)
+==10836==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==10836== 
+==10832== Invalid read of size 8
+==10832==    at 0x109589: free_string_array (wish.c:65)
+==10832==    by 0x10A69C: process_args (wish.c:425)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50c30 is 0 bytes after a block of size 16 alloc'd
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== Conditional jump or move depends on uninitialised value(s)
+==10832==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10832==    by 0x109593: free_string_array (wish.c:65)
+==10832==    by 0x10A69C: process_args (wish.c:425)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== Invalid read of size 8
+==10832==    at 0x109589: free_string_array (wish.c:65)
+==10832==    by 0x10A69C: process_args (wish.c:425)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832==  Address 0x4a50b40 is 0 bytes after a block of size 16 alloc'd
+==10832==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10832==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10832==    by 0x109EA5: process_args (wish.c:277)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== 
+==10832== HEAP SUMMARY:
+==10832==     in use at exit: 6 bytes in 1 blocks
+==10832==   total heap usage: 38 allocs, 37 frees, 5,108 bytes allocated
+==10832== 
+==10832== 6 bytes in 1 blocks are definitely lost in loss record 1 of 1
+==10832==    at 0x484147B: calloc (vg_replace_malloc.c:1340)
+==10832==    by 0x109F33: process_args (wish.c:288)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A66E: process_args (wish.c:422)
+==10832==    by 0x10A9E2: run_wish (wish.c:526)
+==10832==    by 0x10AB40: main (wish.c:566)
+==10832== 
+==10832== LEAK SUMMARY:
+==10832==    definitely lost: 6 bytes in 1 blocks
+==10832==    indirectly lost: 0 bytes in 0 blocks
+==10832==      possibly lost: 0 bytes in 0 blocks
+==10832==    still reachable: 0 bytes in 0 blocks
+==10832==         suppressed: 0 bytes in 0 blocks
+==10832== 
+==10832== Use --track-origins=yes to see where uninitialised values come from
+==10832== For lists of detected and suppressed errors, rerun with: -s
+==10832== ERROR SUMMARY: 18 errors from 12 contexts (suppressed: 0 from 0)

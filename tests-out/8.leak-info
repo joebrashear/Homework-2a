@@ -1,0 +1,64 @@
+==10698== Memcheck, a memory error detector
+==10698== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==10698== Using Valgrind-3.20.0 and LibVEX; rerun with -h for copyright info
+==10698== Command: ./wish tests/8.in
+==10698== Parent PID: 10600
+==10698== 
+==10698== Conditional jump or move depends on uninitialised value(s)
+==10698==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10698==    by 0x109593: free_string_array (wish.c:65)
+==10698==    by 0x10A69C: process_args (wish.c:425)
+==10698==    by 0x10A9E2: run_wish (wish.c:526)
+==10698==    by 0x10AB40: main (wish.c:566)
+==10699== Conditional jump or move depends on uninitialised value(s)
+==10699==    at 0x483F076: free (vg_replace_malloc.c:884)
+==10698== 
+==10699==    by 0x109593: free_string_array (wish.c:65)
+==10699==    by 0x10A1B1: process_args (wish.c:325)
+==10698== Invalid read of size 8
+==10699==    by 0x10A9E2: run_wish (wish.c:526)
+==10699==    by 0x10AB40: main (wish.c:566)
+==10698==    at 0x109589: free_string_array (wish.c:65)
+==10698==    by 0x10A69C: process_args (wish.c:425)
+==10699== 
+==10698==    by 0x10A9E2: run_wish (wish.c:526)
+==10698==    by 0x10AB40: main (wish.c:566)
+==10699== Invalid read of size 8
+==10698==  Address 0x4a50690 is 0 bytes after a block of size 16 alloc'd
+==10698==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10699==    at 0x109589: free_string_array (wish.c:65)
+==10699==    by 0x10A1B1: process_args (wish.c:325)
+==10698==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10699==    by 0x10A9E2: run_wish (wish.c:526)
+==10699==    by 0x10AB40: main (wish.c:566)
+==10698==    by 0x109EA5: process_args (wish.c:277)
+==10698==    by 0x10A9E2: run_wish (wish.c:526)
+==10699==  Address 0x4a50690 is 0 bytes after a block of size 16 alloc'd
+==10698==    by 0x10AB40: main (wish.c:566)
+==10698== 
+==10699==    at 0x483C76F: malloc (vg_replace_malloc.c:392)
+==10699==    by 0x4841722: realloc (vg_replace_malloc.c:1451)
+==10699==    by 0x109EA5: process_args (wish.c:277)
+==10699==    by 0x10A9E2: run_wish (wish.c:526)
+==10699==    by 0x10AB40: main (wish.c:566)
+==10699== 
+==10699== 
+==10699== HEAP SUMMARY:
+==10699==     in use at exit: 0 bytes in 0 blocks
+==10699==   total heap usage: 18 allocs, 18 frees, 4,818 bytes allocated
+==10699== 
+==10699== All heap blocks were freed -- no leaks are possible
+==10699== 
+==10699== Use --track-origins=yes to see where uninitialised values come from
+==10699== For lists of detected and suppressed errors, rerun with: -s
+==10699== ERROR SUMMARY: 3 errors from 2 contexts (suppressed: 0 from 0)
+==10698== 
+==10698== HEAP SUMMARY:
+==10698==     in use at exit: 0 bytes in 0 blocks
+==10698==   total heap usage: 18 allocs, 18 frees, 4,818 bytes allocated
+==10698== 
+==10698== All heap blocks were freed -- no leaks are possible
+==10698== 
+==10698== Use --track-origins=yes to see where uninitialised values come from
+==10698== For lists of detected and suppressed errors, rerun with: -s
+==10698== ERROR SUMMARY: 3 errors from 2 contexts (suppressed: 0 from 0)
